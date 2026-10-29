@@ -1,19 +1,12 @@
-# Appointment Booking
+# Appointment Booking (Streamlit)
 
-A front-end appointment booking app: services, 6-step booking wizard, My Appointments, admin dashboard, XP/badges, light/dark mode, installable PWA.
+Files (keep them in the repo root):
+- app.py            main file for Streamlit
+- index.html        the booking application
+- requirements.txt  dependencies
+- .streamlit/config.toml  theme and server settings
 
-## Run
-- Quickest: open `index.html` in a browser.
-- For PWA/install support, serve it: `python -m http.server 8000` then open http://localhost:8000
+Run locally:  pip install -r requirements.txt  then  streamlit run app.py
+Deploy: Streamlit Community Cloud -> Main file path = app.py
 
-## Structure
-- `index.html` – markup
-- `css/style.css` – theme and animations
-- `js/app.js` – all app logic (data stored in browser localStorage)
-- `manifest.json`, `sw.js`, `icon.svg` – PWA files
-
-## Demo
-Admin tab password: `admin123` (demo only, checked in the browser).
-
-## Limits
-No real backend: no login, payments, email reminders or database. The admin check is not real security. A production version needs a server (e.g. Node/Express + PostgreSQL) enforcing roles and slot conflicts.
+Notes: bookings are kept in the browser; payments are simulated.

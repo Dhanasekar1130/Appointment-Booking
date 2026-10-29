@@ -1,29 +1,157 @@
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Appointment Booking</title>
-<link rel="stylesheet" href="css/style.css">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1b2a6b"></head><body>
-<header><span class="logo">📅 Appointment Booking</span>
-<nav id="nav"></nav><button class="btn g" id="th" aria-label="Toggle theme">🌓</button></header>
-<main>
-<section class="view on" id="home">
- <div class="hero"><h1>Book smarter. Level up.</h1><p>Discover services, pick a provider and a time that is truly free, and earn XP for every booking.</p>
- <button class="btn" style="background:var(--ac);color:#161a33" data-go="book">Book an Appointment</button> <button class="btn g" data-go="services">Explore Services</button>
- <div id="lvl" style="margin-top:16px"></div><div class="xp"><i id="xpb"></i></div></div>
- <div class="grid" id="hstats"></div>
- <h2>How it works</h2><div class="grid"><div class="card"><div class="em">🔎</div><b>1. Choose</b><div class="mu">Pick a service and provider.</div></div><div class="card"><div class="em">🗓️</div><b>2. Schedule</b><div class="mu">Only free slots are shown.</div></div><div class="card"><div class="em">✅</div><b>3. Confirm</b><div class="mu">Get a reference number instantly.</div></div></div>
- <h2>Your badges</h2><div class="badges" id="badges"></div>
-</section>
-<section class="view" id="services"><h2>Services</h2>
- <div class="row"><input id="q" placeholder="Search services…"><select id="cat"></select><select id="sort"><option value="">Sort by</option><option value="p">Price</option><option value="r">Rating</option></select></div>
- <div class="grid" id="sgrid"></div></section>
-<section class="view" id="book"><h2>Book an appointment</h2><div class="steps" id="steps"></div><div id="bbody" class="card"></div>
- <div class="row"><button class="btn g" id="bback">Back</button><button class="btn" id="bnext">Next</button></div></section>
-<section class="view" id="mine"><h2>My appointments</h2>
- <div class="row"><input id="mq" placeholder="Search by reference…"><select id="mf"><option value="">All statuses</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option></select></div>
- <div class="grid" id="mgrid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))"></div></section>
-<section class="view" id="admin"><h2>Admin dashboard</h2><div id="alock" class="card"></div><div id="abody" hidden></div></section>
-</main><div id="toasts"></div>
-<script src="js/app.js"></script>
-<script>if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("sw.js").catch(()=>{})</script></body></html>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Appointment Booking</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+:root{--bg:#f4f5fa;--card:#fff;--tx:#14173a;--mu:#6b7090;--pr:#5b3fd4;--nv:#14205c;--ac:#ff8a2b;--bd:#e3e5f0;--ok:#16a34a;--wa:#f59e0b;--in:#2563eb;--er:#dc2626;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0d1030;--card:#171b45;--tx:#eef0ff;--mu:#9aa0cc;--bd:#2a2f66;--pr:#8f78ff;color-scheme:dark}}
+:root[data-theme=dark]{--bg:#0d1030;--card:#171b45;--tx:#eef0ff;--mu:#9aa0cc;--bd:#2a2f66;--pr:#8f78ff;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;transition:background .3s,color .3s}
+header{background:linear-gradient(120deg,var(--nv),#5b3fd4);color:#fff;padding:14px 18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+h1{font-size:19px;margin:0}nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button,.btn{border:0;border-radius:10px;padding:9px 14px;cursor:pointer;font:inherit;font-weight:600;transition:transform .12s,filter .2s}
+nav button{background:#ffffff22;color:#fff}nav button.on{background:#fff;color:var(--nv)}
+.btn{background:var(--pr);color:#fff}.btn.o{background:var(--ac)}.btn.g{background:transparent;color:var(--pr);border:1px solid var(--bd)}.btn.s{padding:5px 10px;font-size:13px}
+.btn:hover,nav button:hover{filter:brightness(1.1)}.btn:active,nav button:active{transform:scale(.95)}.btn:disabled{opacity:.4;cursor:not-allowed}
+main{max-width:980px;margin:0 auto;padding:18px}.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:14px;box-shadow:0 4px 18px #14205c10;animation:up .35s both}
+@keyframes up{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.tile{cursor:pointer;text-align:center;transition:transform .2s,border-color .2s}.tile:hover{transform:translateY(-4px);border-color:var(--pr)}.tile .e{font-size:30px}
+.mu{color:var(--mu);font-size:13px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.sp{justify-content:space-between}
+.slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+.slot{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 4px;cursor:pointer;font:inherit;transition:.15s}
+.slot:hover{border-color:var(--pr)}.slot.sel{background:var(--pr);color:#fff}.slot.full{opacity:.5;text-decoration:line-through}.slot.q{border-color:var(--ok)}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}.days .slot{min-width:70px}
+.bd{display:inline-block;border-radius:99px;padding:2px 10px;color:#fff;font-size:12px;font-weight:700}
+.st-Pending{background:var(--wa)}.st-Confirmed{background:var(--ok)}.st-Completed{background:var(--in)}.st-Cancelled{background:var(--er)}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font:inherit;margin:4px 0 10px}
+.prog{display:flex;gap:6px;margin-bottom:14px}.prog i{flex:1;height:6px;border-radius:9px;background:var(--bd);transition:.4s}.prog i.on{background:linear-gradient(90deg,var(--pr),var(--ac))}
+.bar{height:16px;border-radius:8px;background:linear-gradient(90deg,var(--pr),var(--ac));transition:width .8s}.kpi{font-size:28px;font-weight:800;color:var(--pr)}
+#toast{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:8px;z-index:9}
+#toast div{background:var(--nv);color:#fff;padding:10px 16px;border-radius:12px;animation:up .3s;box-shadow:0 6px 20px #0004;max-width:300px}
+.modal{position:fixed;inset:0;background:#000a;display:grid;place-items:center;z-index:8;padding:16px}.modal .card{max-width:420px;width:100%;text-align:center;max-height:90vh;overflow:auto}
+.ok{width:70px;height:70px;border-radius:50%;background:var(--ok);color:#fff;font-size:40px;display:grid;place-items:center;margin:0 auto 8px;animation:pop .5s}
+@keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.tag{font-size:12px;border:1px solid var(--ok);color:var(--ok);border-radius:8px;padding:1px 6px}
+body::before{content:"";position:fixed;inset:-20%;z-index:-1;background:radial-gradient(40% 40% at 20% 20%,#5b3fd455,transparent),radial-gradient(35% 35% at 80% 30%,#ff8a2b44,transparent),radial-gradient(40% 40% at 50% 90%,#2563eb44,transparent);animation:aur 16s ease-in-out infinite alternate}
+@keyframes aur{to{transform:translate(4%,-3%) rotate(8deg) scale(1.1)}}
+.hero{background:linear-gradient(120deg,#14205c,#5b3fd4,#ff8a2b,#14205c);background-size:300% 300%;animation:gs 10s linear infinite;color:#fff;border:0;position:relative;overflow:hidden}
+@keyframes gs{to{background-position:300% 0}}
+.hero h2{margin:0 0 4px;font-size:26px}.hs{display:flex;gap:22px;margin-top:10px}.hs b{font-size:24px;display:block}
+.fl{position:absolute;font-size:30px;opacity:.5;animation:fl 5s ease-in-out infinite alternate}
+@keyframes fl{to{transform:translateY(-14px) rotate(12deg)}}
+.orb{width:92px;height:92px;border-radius:50%;background:conic-gradient(#fff,#ff8a2b,#5b3fd4,#fff);display:grid;place-items:center;animation:spin 6s linear infinite;box-shadow:0 0 30px #ff8a2b88;flex:none}
+.orb span{width:76px;height:76px;border-radius:50%;background:#14205c;display:grid;place-items:center;text-align:center;font-weight:800;font-size:13px;animation:spin 6s linear infinite reverse}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tile{animation-fill-mode:backwards;transform-style:preserve-3d}
+.btn,.slot{position:relative;overflow:hidden}.rp{position:absolute;border-radius:50%;background:#fff7;transform:scale(0);animation:rp .6s ease-out;pointer-events:none}
+@keyframes rp{to{transform:scale(4);opacity:0}}
+.cf{position:fixed;top:40%;left:50%;width:9px;height:14px;z-index:20;pointer-events:none;animation:cf 1.4s ease-out forwards}
+@keyframes cf{to{transform:translate(var(--x),var(--y)) rotate(var(--r));opacity:0}}
+.bar{transform-origin:left;animation:gw .9s both}@keyframes gw{from{transform:scaleX(0)}}
+.nx{animation:pl 1.1s ease-in-out infinite}@keyframes pl{50%{transform:scale(1.08);opacity:.6}}
+.prog i.on:last-of-type{box-shadow:0 0 10px var(--ac)}
+.dot{cursor:pointer;transform-box:fill-box;transform-origin:center;transition:transform .2s;animation:pop .5s backwards}.dot:hover{transform:scale(1.6)}
+.sun{transform-box:fill-box;transform-origin:center;animation:spin 20s linear infinite}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<header><h1>📅 Appointment Booking</h1><nav id="nav"></nav><div class="row"><span id="lv" class="bd" style="background:#ffffff33"></span><button class="btn s g" style="color:#fff;border-color:#fff6" onclick="theme()" aria-label="Toggle theme">🌓</button></div></header>
+<main id="app"></main><div id="toast" aria-live="polite"></div><div id="md"></div>
+<script>
+const SV=[{id:"doc",n:"Doctor Consultation",i:"🩺",p:600,d:30,v:1},{id:"sal",n:"Salon & Beauty",i:"💇",p:400,d:60},{id:"fit",n:"Fitness Consultation",i:"🏋️",p:300,d:30,v:1},{id:"biz",n:"Business Consultation",i:"💼",p:800,d:60,v:1},{id:"edu",n:"Career Guidance",i:"🎓",p:350,d:30,v:1}];
+const PR=[{id:1,n:"Dr. Asha Rao",b:"Chennai Central",s:["doc","fit"],r:4.9},{id:2,n:"Karthik S.",b:"Madurai Hub",s:["sal","biz"],r:4.7},{id:3,n:"Meera N.",b:"Chennai Central",s:["biz","edu","sal"],r:4.8},{id:4,n:"Dr. Imran K.",b:"Madurai Hub",s:["doc","edu","fit"],r:4.6}];
+const CP={WELCOME10:{t:"%",v:10,min:300,d:"10% off, min ₹300"},SAVE100:{t:"₹",v:100,min:700,d:"₹100 off, min ₹700"}};
+const LV=[["Bronze",0],["Silver",200],["Gold",500]];
+const $=s=>document.querySelector(s),sv=id=>SV.find(x=>x.id===id),pr=id=>PR.find(x=>x.id==id);
+const def=()=>({a:[],pts:0,th:"",w:[],nt:[],cu:{}});
+let S;try{S=JSON.parse(localStorage.getItem("ab5")||"")||def()}catch(e){S=def()}
+const save=()=>{try{localStorage.setItem("ab5",JSON.stringify(S))}catch(e){}};
+let V="book",W={step:0},last=null;
+const pad=n=>String(n).padStart(2,"0"),tm=m=>pad(Math.floor(m/60))+":"+pad(m%60);
+const dstr=o=>{const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const dl=s=>new Date(s+"T00:00").toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+const hash=s=>[...s].reduce((h,c)=>(h*31+c.charCodeAt(0))>>>0,7);
+const act=a=>a.status==="Confirmed"||a.status==="Pending";
+function toast(m){const d=document.createElement("div");d.textContent=m;$("#toast").append(d);setTimeout(()=>d.remove(),3800)}
+function note(m){S.nt.unshift({m,t:new Date().toLocaleTimeString()});save();toast(m)}
+function theme(){const r=document.documentElement,dk=getComputedStyle(r).colorScheme==="dark";S.th=dk?"light":"dark";r.dataset.theme=S.th;save()}
+if(S.th)document.documentElement.dataset.theme=S.th;
+function busy(p,date,t,d){return S.a.some(a=>act(a)&&a.pr==p&&a.date===date&&t<a.t+sv(a.sv).d+10&&a.t<t+d+10)||hash(p+date+t)%5===0}
+function slots(p,svid,date){const d=sv(svid).d,out=[],now=new Date(),isT=date===dstr(0),nm=now.getHours()*60+now.getMinutes()+60;
+for(let t=540;t+d<=1050;t+=30){if(isT&&t<nm)continue;const b=busy(p,date,t,d);out.push({t,b,q:!b&&hash(date+t)%3===0})}return out}
+const price=()=>{const s=sv(W.sv);let p=s.p,c=W.cp&&CP[W.cp];if(c&&p>=c.min)p-=c.t==="%"?Math.round(p*c.v/100):c.v;if(W.pts&&S.pts>=100)p-=50;return Math.max(p,0)};
+function lvl(){let l=LV[0][0];LV.forEach(x=>{if(S.pts>=x[1])l=x[0]});return l}
+function nav(){const T=[["book","Book"],["mine","My Appointments"],["queue","Waiting Room"],["rewards","Rewards"],["admin","Admin"]];
+$("#nav").innerHTML=T.map(t=>`<button class="${V===t[0]?"on":""}" onclick="V='${t[0]}';R()">${t[1]}</button>`).join("");$("#lv").textContent="⭐ "+lvl()+" · "+S.pts+" pts"}
+function R(){nav();$("#app").innerHTML=({book:rBook,mine:rMine,queue:rQueue,rewards:rRew,admin:rAdmin})[V]();post()}
+/* ---- booking ---- */
+function assistant(){const q=$("#nl").value.toLowerCase();if(!q)return;
+const m={doc:/doctor|doc|clinic/,sal:/salon|hair|beauty/,fit:/fit|gym/,biz:/business/,edu:/career|educat/};
+const id=Object.keys(m).find(k=>m[k].test(q));if(!id){$("#nr").textContent="I could not find a service in that. Try: “Book a doctor appointment tomorrow morning”.";return}
+const off=/tomorrow/.test(q)?1:/day after/.test(q)?2:0,lo=/morning/.test(q)?0:/afternoon/.test(q)?720:/evening/.test(q)?900:0,hi=/morning/.test(q)?720:1050;
+const p=PR.find(x=>x.s.includes(id));for(let o=off;o<off+7;o++){const f=slots(p.id,id,dstr(o)).filter(s=>!s.b&&s.t>=lo&&s.t<hi).sort((a,b)=>b.q-a.q)[0];
+if(f){W={step:4,sv:id,pr:p.id,date:dstr(o),t:f.t};toast("Slot suggested"+(f.q?" (a quieter time)":""));R();return}}
+$("#nr").textContent="No free slot found in the next week. Join a waitlist from the slot picker."}
+function rBook(){const s=W.step,P=`<div class="prog">${[0,1,2,3,4].map(i=>`<i class="${i<=s?"on":""}"></i>`).join("")}</div>`;let h="";
+if(s===0)h=`${hero()}<div class="card"><b>🤖 Booking assistant</b> <span class="tag">rule-based · no AI API configured</span><div class="row" style="margin-top:8px"><input id="nl" placeholder="Book a doctor appointment tomorrow morning" style="flex:1;margin:0" onkeydown="if(event.key==='Enter')assistant()"><button class="btn o" onclick="assistant()">Find slot</button></div><div id="nr" class="mu" style="margin-top:6px"></div></div>${last?`<div class="card row sp"><span>Rebook ${sv(last.sv).n}?</span><button class="btn s" onclick="W={step:1,sv:'${last.sv}'};R()">One-click rebook</button></div>`:""}<h3>Choose a service</h3><div class="grid">${SV.map(x=>`<div class="card tile" onclick="W={step:1,sv:'${x.id}'};R()"><div class="e">${x.i}</div><b>${x.n}</b><div class="mu">${x.d} min · ₹${x.p}${x.v?" · 🎥 remote":""}</div></div>`).join("")}</div>`;
+if(s===1)h=`<h3>Choose a provider · ${sv(W.sv).n}</h3><div class="grid">${PR.filter(x=>x.s.includes(W.sv)).map(x=>`<div class="card tile" onclick="W.pr=${x.id};W.step=2;R()"><div class="e">👤</div><b>${x.n}</b><div class="mu">📍 ${x.b}<br>★ ${x.r}</div></div>`).join("")}</div>`;
+if(s===2)h=`<h3>Pick a date</h3><div class="days">${[0,1,2,3,4,5,6].map(o=>`<button class="slot" onclick="W.date='${dstr(o)}';W.step=3;R()">${dl(dstr(o)).replace(/ /g,"<br>")}</button>`).join("")}</div>`;
+if(s===3){const L=slots(W.pr,W.sv,W.date);h=`<h3>${dl(W.date)} · time slots</h3><p class="mu">Green outline = quieter time. Full slots: tap to join the waitlist. Buffer time of 10 min is applied.</p><div class="card">${arc(L)}</div><div class="slots">${L.map(x=>`<button class="slot ${x.b?"full":x.q?"q":""}" onclick="${x.b?`wl(${x.t})`:`W.t=${x.t};W.step=4;R()`}">${tm(x.t)}</button>`).join("")||"<p>No slots left today.</p>"}</div>`}
+if(s===4){const x=sv(W.sv),p=pr(W.pr),alt=slots(W.pr,W.sv,W.date).filter(a=>!a.b&&a.t!==W.t).slice(0,3);
+h=`<div class="card"><h3>Review booking</h3><p>${x.i} <b>${x.n}</b> with <b>${p.n}</b> · ${p.b}<br>🗓 ${dl(W.date)} at ${tm(W.t)} (${x.d} min)${x.v?"<br>🎥 Video link is added after you complete setup (not configured here)":""}</p>
+<label>Name<input id="nm" value="${W.nm||""}" placeholder="Your name"></label><label>Notes (optional)<textarea id="ns" rows="2"></textarea></label>
+<label>Coupon<select id="cp" onchange="W.cp=this.value;R()"><option value="">None</option>${Object.keys(CP).map(k=>`<option ${W.cp===k?"selected":""} value="${k}">${k} — ${CP[k].d}</option>`).join("")}</select></label>
+${S.pts>=100?`<label><input type="checkbox" style="width:auto" ${W.pts?"checked":""} onchange="W.pts=this.checked;R()"> Redeem 100 points for ₹50 off</label>`:""}
+<label>Payment<select id="py"><option value="loc">Pay at location (pending)</option><option value="sim">Simulated online payment (demo only)</option></select></label>
+<p class="mu">Policy: free cancellation until 2 hours before. Rescheduling by cancel and rebook. Max 5 active bookings.</p><h3>Total ₹${price()}</h3>
+<div class="row"><button class="btn o" onclick="confirmB()">Confirm appointment</button><button class="btn g" onclick="W.step=3;R()">Back</button></div>
+<div class="mu" style="margin-top:8px">Other open times: ${alt.map(a=>`<button class="slot" style="padding:2px 8px" onclick="W.t=${a.t};R()">${tm(a.t)}</button>`).join(" ")}</div></div>`}
+return P+h}
+function wl(t){if(!S.w.some(w=>w.pr==W.pr&&w.date===W.date&&w.t===t)){S.w.push({pr:W.pr,sv:W.sv,date:W.date,t});save()}toast("Added to waitlist. You will be notified if it opens. This does not book it.")}
+function confirmB(){const nm=$("#nm").value.trim();if(!nm){$("#nm").style.borderColor="var(--er)";toast("Please enter your name");return}
+const x=sv(W.sv);if(busy(W.pr,W.date,W.t,x.d)){toast("That slot was just taken. Pick another.");W.step=3;R();return}
+if(S.a.filter(act).length>=5){toast("Maximum 5 active bookings reached");return}
+const c=W.cp&&CP[W.cp];if(W.cp&&x.p<c.min){toast("Coupon minimum not met");return}
+const pay=$("#py").value,a={id:Date.now(),ref:"AB-"+Math.random().toString(36).slice(2,8).toUpperCase(),sv:W.sv,pr:W.pr,date:W.date,t:W.t,nm,ns:$("#ns").value,price:price(),status:pay==="sim"?"Confirmed":"Pending",paid:pay==="sim",cp:W.cp,q:""};
+if(W.pts)S.pts-=100;if(W.cp)S.cu[W.cp]=(S.cu[W.cp]||0)+1;S.a.push(a);last=a;W={step:0};save();note("Booking "+a.ref+" "+a.status.toLowerCase());boom();
+$("#md").innerHTML=`<div class="modal"><div class="card"><div class="ok">✓</div><h3>${a.status==="Confirmed"?"Booked":"Request received"}!</h3><p>Reference <b>${a.ref}</b><br>${dl(a.date)} · ${tm(a.t)}</p><button class="btn" onclick="$('#md').innerHTML='';V='mine';R();pass('${a.ref}')">View QR pass</button></div></div>`}
+/* ---- appointments ---- */
+function pass(ref){const a=S.a.find(x=>x.ref===ref);let q="";try{const k=qrcode(0,"M");k.addData(a.ref);k.make();q=k.createSvgTag(5)}catch(e){q="<p class=mu>QR library unavailable offline. Show the reference instead.</p>"}
+$("#md").innerHTML=`<div class="modal" onclick="if(event.target===this)this.innerHTML=''"><div class="card"><h3>Appointment pass</h3><div style="background:#fff;padding:10px;border-radius:10px;display:inline-block">${q}</div><h2>${a.ref}</h2><p>${sv(a.sv).n}<br>${pr(a.pr).n}<br>${dl(a.date)} · ${tm(a.t)}</p><p class="mu">The code holds only the reference number, no personal data.</p><button class="btn" onclick="window.print()">Print</button> <button class="btn g" onclick="$('#md').innerHTML=''">Close</button></div></div>`}
+function cancel(ref){const a=S.a.find(x=>x.ref===ref);a.status="Cancelled";save();note("Cancelled "+ref);
+const w=S.w.filter(w=>w.pr==a.pr&&w.date===a.date&&w.t<a.t+sv(a.sv).d&&a.t<w.t+sv(w.sv).d);if(w.length){note("Waitlist: "+tm(w[0].t)+" on "+dl(w[0].date)+" is now open. Book it from the slot picker.");S.w=S.w.filter(x=>!w.includes(x));save()}R()}
+function rMine(){const q=(window.fq||"").toLowerCase();const L=S.a.filter(a=>a.ref.toLowerCase().includes(q)||a.status.toLowerCase().includes(q)).sort((a,b)=>(a.date+a.t)<(b.date+b.t)?-1:1);
+return `<input placeholder="Search by reference or status" value="${window.fq||""}" oninput="window.fq=this.value;R();this.focus()">
+${S.nt.length?`<div class="card"><b>🔔 Notifications</b>${S.nt.slice(0,4).map(n=>`<div class="mu">${n.t} · ${n.m}</div>`).join("")}<button class="btn s g" onclick="S.nt=[];save();R()">Clear</button></div>`:""}
+${L.map(a=>`<div class="card"><div class="row sp"><b>${sv(a.sv).i} ${sv(a.sv).n}</b><span class="bd st-${a.status}">${a.status}</span></div><div class="mu">${a.ref} · ${pr(a.pr).n} · ${dl(a.date)} ${tm(a.t)} · ₹${a.price} ${a.paid?"(paid, simulated)":""}</div>
+<div class="row" style="margin-top:8px">${a.status!=="Cancelled"?`<button class="btn s" onclick="pass('${a.ref}')">QR pass</button>`:""}${act(a)?`<button class="btn s g" onclick="cancel('${a.ref}')">Cancel</button><button class="btn s g" onclick="cancel('${a.ref}');W={step:2,sv:'${a.sv}',pr:${a.pr}};V='book';R()">Reschedule</button>`:""}<button class="btn s g" onclick="W={step:1,sv:'${a.sv}'};V='book';R()">Rebook</button></div></div>`).join("")||`<div class="card" style="text-align:center"><div style="font-size:42px">🗓</div><b>No appointments yet</b><p class="mu">Book your first one in a few taps.</p><button class="btn o" onclick="V='book';R()">Book now</button></div>`}`}
+/* ---- waiting room ---- */
+function checkin(ref){ref=ref.trim().toUpperCase();const a=S.a.find(x=>x.ref===ref);if(!a||!act(a))return toast("Invalid or inactive booking");if(a.date!==dstr(0))return toast("This booking is not for today");if(a.q)return toast("Already checked in");a.q="arrived";save();note("Checked in "+ref);R()}
+function setQ(ref,s){const a=S.a.find(x=>x.ref===ref);if(s==="done"){a.status="Completed";a.q="";const p=Math.floor(a.price/10),l0=lvl();S.pts+=p;boom();note("Completed. +"+p+" reward points");if(lvl()!==l0)note("🎉 Level up: "+lvl())}else a.q=s;save();R()}
+function rQueue(){const L=S.a.filter(a=>act(a)&&a.date===dstr(0)).sort((a,b)=>a.t-b.t);let cum=0;
+return `<div class="card"><b>Check in</b> <span class="mu">(type or scan the pass reference)</span><div class="row"><input id="ci" placeholder="AB-XXXXXX" style="flex:1;margin:0"><button class="btn" onclick="checkin($('#ci').value)">Check in</button></div></div>
+<h3>Today’s queue</h3><p class="mu">Wait times are estimates, not guarantees.</p>
+${L.map((a,i)=>{const w=cum;cum+=sv(a.sv).d;return `<div class="card"><div class="row sp"><b>#${i+1} · ${tm(a.t)} · ${a.nm}</b><span class="mu">${a.q||"not arrived"}</span></div><div class="mu">${sv(a.sv).n} · ref ${a.ref} · est. wait ≈ ${w} min</div>${i===0?`<b class="nx" style="color:var(--ac);display:inline-block">Your turn is next</b>`:""}
+<div class="row" style="margin-top:6px"><button class="btn s g" onclick="setQ('${a.ref}','waiting')">Waiting</button><button class="btn s g" onclick="setQ('${a.ref}','serving')">Serving</button><button class="btn s" onclick="setQ('${a.ref}','done')">Complete</button></div></div>`}).join("")||`<div class="card mu">No appointments today. Book one for today to try the queue.</div>`}`}
+/* ---- rewards ---- */
+function rRew(){const n=LV.find(l=>l[1]>S.pts),p=n?Math.round((S.pts-LV[LV.indexOf(n)-1][1])/(n[1]-LV[LV.indexOf(n)-1][1])*100):100;
+return `<div class="card"><div class="kpi">${S.pts} pts · ${lvl()}</div><div style="background:var(--bd);border-radius:8px"><div class="bar" style="width:${p}%"></div></div><p class="mu">Earn 1 point per ₹10 on completed appointments. ${n?n[1]-S.pts+" pts to "+n[0]:"Top level reached"}. Redeem 100 pts for ₹50 off at booking. Points expire after 12 months (demo rule).</p></div>
+<div class="card"><b>🎟 Available coupons</b>${Object.keys(CP).map(k=>`<div class="row sp"><span><b>${k}</b> · ${CP[k].d}</span><span class="mu">used ${S.cu[k]||0}×</span></div>`).join("")}</div>
+<div class="card"><b>Referral code</b><div class="kpi">GRT-${hash(String(S.pts)+"u").toString(36).slice(0,5).toUpperCase()}</div><p class="mu">Referral rewards need a server to prevent abuse, so sharing is not active in this prototype.</p></div>`}
+function hero(){return `<div class="card hero row sp"><span class="fl" style="right:130px;top:8px">✨</span><span class="fl" style="right:40px;bottom:6px;animation-delay:-2s">📅</span><div><h2>Book smarter. Level up.</h2><div>Every visit earns XP. Your orb grows with you.</div><div class="hs"><div><b data-n="${S.a.length}">0</b>bookings</div><div><b data-n="${S.pts}">0</b>points</div><div><b data-n="${PR.length}">0</b>providers</div></div></div><div class="orb"><span>${lvl()}<br>${S.pts} XP</span></div></div>`}
+function post(){document.querySelectorAll(".grid>*").forEach((e,i)=>e.style.animationDelay=i*70+"ms");document.querySelectorAll("[data-n]").forEach(e=>{const n=+e.dataset.n,t0=performance.now();(function f(t){const k=Math.min(1,(t-t0)/900);e.textContent=Math.round(n*(1-Math.pow(1-k,3)));if(k<1)requestAnimationFrame(f)})(t0)})}
+function boom(){for(let i=0;i<44;i++){const d=document.createElement("i");d.className="cf";d.style.cssText=`--x:${(Math.random()-.5)*500}px;--y:${Math.random()*400-120}px;--r:${Math.random()*720}deg;background:hsl(${Math.random()*360} 90% 60%)`;document.body.append(d);setTimeout(()=>d.remove(),1500)}}
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".btn,.slot");if(!b)return;const r=b.getBoundingClientRect(),s=document.createElement("span"),z=Math.max(r.width,r.height);s.className="rp";s.style.cssText=`width:${z}px;height:${z}px;left:${e.clientX-r.left-z/2}px;top:${e.clientY-r.top-z/2}px`;b.append(s);setTimeout(()=>s.remove(),600)});
+document.addEventListener("mousemove",e=>{const t=e.target.closest&&e.target.closest(".tile");document.querySelectorAll(".tile[data-t]").forEach(x=>{if(x!==t){x.style.transform="";delete x.dataset.t}});if(t){const r=t.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;t.dataset.t=1;t.style.transform=`perspective(600px) rotateY(${x*14}deg) rotateX(${-y*14}deg) translateY(-4px)`}});
+function arc(L){if(!L.length)return "";const P=L.map((x,i)=>{const th=Math.PI*(x.t-540)/510,cx=300-260*Math.cos(th),cy=190-170*Math.sin(th),c=x.b?"var(--bd)":x.q?"var(--ok)":"var(--pr)";return `<circle class="dot" cx="${cx.toFixed(0)}" cy="${cy.toFixed(0)}" r="${x.b?7:11}" fill="${c}" style="animation-delay:${i*40}ms" onclick="${x.b?`wl(${x.t})`:`W.t=${x.t};W.step=4;R()`}"><title>${tm(x.t)}${x.b?" (full, tap to waitlist)":x.q?" (quiet)":""}</title></circle>`}).join("");
+return `<svg viewBox="0 0 600 215" style="width:100%;max-height:230px" role="group" aria-label="Sun path of available times"><path d="M40 190 A260 170 0 0 1 560 190" fill="none" stroke="var(--bd)" stroke-width="3" stroke-dasharray="6 8"/><text x="300" y="120" text-anchor="middle" font-size="44" class="sun">☀️</text><text x="40" y="212" font-size="12" fill="var(--mu)">09:00 morning</text><text x="560" y="212" font-size="12" fill="var(--mu)" text-anchor="end">evening 17:30</text>${P}</svg><div class="mu" style="text-align:center">Sun-path picker · follow the sun, pick a dot</div>`}
+/* ---- admin ---- */
+function seed(){for(let i=1;i<=14;i++){const x=SV[i%5],p=PR.find(q=>q.s.includes(x.id));S.a.push({id:i,ref:"DM-"+i,sv:x.id,pr:p.id,date:dstr(-i),t:540+(i%8)*30,nm:"Demo",ns:"",price:x.p,status:i%6===0?"Cancelled":"Completed",paid:1,q:""})}save();R()}
+function rAdmin(){const A=S.a,c=s=>A.filter(a=>a.status===s).length,tot=A.length,rev=A.filter(a=>a.status==="Completed"||a.paid&&act(a)).reduce((s,a)=>s+a.price,0),mx=Math.max(1,...SV.map(x=>A.filter(a=>a.sv===x.id).length));
+const hr={};A.forEach(a=>{const h=Math.floor(a.t/60);hr[h]=(hr[h]||0)+1});const pk=Object.entries(hr).sort((a,b)=>b[1]-a[1])[0];
+const csv="ref,service,provider,date,time,status,price\n"+A.map(a=>[a.ref,sv(a.sv).n,pr(a.pr).n,a.date,tm(a.t),a.status,a.price].join(",")).join("\n");
+return `<p class="mu">Admin view of this browser’s data. Real role-based access, branches and server checks need the backend described in your spec.</p>
+<div class="grid">${[["Total",tot],["Today",A.filter(a=>a.date===dstr(0)&&act(a)).length],["Completed",c("Completed")],["Cancel rate",tot?Math.round(c("Cancelled")/tot*100)+"%":"0%"],["Revenue","₹"+rev],["Peak hour",pk?pk[0]+":00":"–"]].map(k=>`<div class="card"><div class="mu">${k[0]}</div><div class="kpi">${k[1]}</div></div>`).join("")}</div>
+<div class="card"><b>Bookings by service</b>${SV.map(x=>{const n=A.filter(a=>a.sv===x.id).length;return `<div class="mu" style="margin-top:8px">${x.i} ${x.n} · ${n}</div><div class="bar" style="width:${n/mx*100}%;min-width:4px"></div>`}).join("")}</div>
+<div class="card row"><button class="btn" onclick="seed()">Load demo data</button><button class="btn g" onclick="if(confirm('Reset all data?')){S=def();save();R()}">Reset</button></div>
+<div class="card"><b>CSV report</b> <span class="mu">(copy it)</span><textarea rows="5" readonly>${csv}</textarea></div>`}
+R();
+</script></body></html>
